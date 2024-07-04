@@ -1,2 +1,4 @@
 __pycache__/
 openai-env/
+config.ini
+task.docs
