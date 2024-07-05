@@ -13,7 +13,7 @@ class ChatBot:
             self.system_prompt = """
             You are a smart bot assistant and you need to make some research on some topics\
             You will recive a user question and some data found in internet and you need to answer that question \
-            using recived data. Don't try to answer by your own. 
+            using recived data. Don't try to answer by your own. You also need to save links.
                 """
         self.long_history = [{"role": "system", "content": self.system_prompt}]
         self.short_history = [{"role": "system", "content": self.system_prompt}]
@@ -37,12 +37,12 @@ class ChatBot:
         self.short_history.append({"role": "assistant", "content": result})
         # long history
         if assistant_message:
-            self.long_history.append({"role": "assistant", "content": assistant_message})
+            self.long_history.append(assistant_message)
         self.long_history.append(user_message)
         self.long_history.append({"role": "assistant", "content": result})
         # assistant history
         if assistant_message:
-            self.assistant_history.append({"role": "assistant", "content": assistant_message})
+            self.assistant_history.append(assistant_message)
         return result
     
     def execute(self, messages):
@@ -60,13 +60,21 @@ class ChatBot:
         return data
     
     def is_search_needed(self, query):
+        if len(self.assistant_history) > 0:
+            content = self.assistant_history[-1]["content"]
+        else:
+            content = ""
         prompt = f"""
-        You have a user question and the user-bot chat history and you need to decide\
-        whether i need to search some information for you to answer teh question \
-        or chat history will be enough. Answer just yes if search is needed or no if not. \
-        Please never answer the question, just answer yes or no. Your task is to decide \
-        whether additional search is needed or not.
-        User Question: {query}
+        You are a smart classification model and you need to clasify user question in two groups. \
+        The first group is the questions which need the external data from internet, \
+        for example they can be technical questions or recent news. \
+        The secont group is the questions which can be answerd without external data, \
+        for example question about the data that you already have or simple commands \
+        like translating your previous messages or giving links which were used to your previous answer ect. \
+        Please answer 'first' if the question belongs to the first class \
+        and 'second' if the question belongs to the second. \n
+        Here is that user question: {query} \n
+        Here is the context that you have: {content}
             """
         if len(self.assistant_history) > 0:
             messages = [{"role": "system", "content": prompt}] + [self.assistant_history[-1]]
@@ -78,10 +86,10 @@ class ChatBot:
             messages = messages
         )
         result = result.choices[0].message.content.lower()
-        if result == "yes":
+        if result == "first":
             print("Search is needed")
             return True
-        elif result == "no":
+        elif result == "second":
             print("Search is not needed")
             return False
         else:
@@ -94,7 +102,7 @@ def loop():
     while True:
         query = input("Input your Question('exit' for exiting): ")
         if query == "exit":
-            print(bot.history)
+            print(bot.short_history)
             break
         result = bot(query)
         print(result)
