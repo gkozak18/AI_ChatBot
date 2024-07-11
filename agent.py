@@ -21,17 +21,26 @@ class ChatBot:
         self.model = model
         self.temperature = temperature
     
-    def __call__(self, query: str):
+    def __call__(self, query: str, history: list[dict[str, str]] | None = None):
         assistant_message = ""
         if self.is_search_needed(query):
             found_data = self.search(query)
             assistant_message = {"role": "assistant", "content": found_data}
         user_message = {"role": "user", "content": query}
+
+        # creating messages for gpt
         if assistant_message:
-            messages = self.long_history + [assistant_message] + [user_message]
+            messages = [assistant_message] + [user_message]
         else:
-            messages = self.long_history + [user_message]
+            messages = [user_message]
+        
+        # external history or internal
+        if history:
+            messages = history + messages 
+        else:
+            messages = self.long_history + messages
         result = self.execute(messages)
+
         # short history
         self.short_history.append(user_message)
         self.short_history.append({"role": "assistant", "content": result})
@@ -86,10 +95,10 @@ class ChatBot:
             messages = messages
         )
         result = result.choices[0].message.content.lower()
-        if result == "first":
+        if "first" in result:
             print("Search is needed")
             return True
-        elif result == "second":
+        elif "second" in result:
             print("Search is not needed")
             return False
         else:
