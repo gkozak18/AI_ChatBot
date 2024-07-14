@@ -1,13 +1,13 @@
-#from agent import ChatBot
+from agent import ChatBot
 from agent_ollama import OllamaAgent
 
 
 def loop():
-    bot = OllamaAgent()
+    bot = ChatBot()
     while True:
         query = input("Input your Question('exit' for exiting): ")
         if query == "exit":
-            #print(bot.short_history)
+            print(bot.history)
             break
         result = bot(query)
         print(result)

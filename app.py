@@ -3,13 +3,13 @@ from pydantic import BaseModel
 from agent import ChatBot
 
 
+app = FastAPI()
+
+
 class ChatRequest(BaseModel):
     user_id: str
     user_message: str
     history: list[dict[str, str]]
-
-
-app = FastAPI()
 
 
 @app.post("/send_message/")
